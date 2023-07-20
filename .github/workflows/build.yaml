@@ -1,0 +1,38 @@
+name: DGMD API Image Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  buildContainer:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Container Image
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          set -e
+          docker build -t dgmd_mlflow:latest .
+          docker tag dgmd_mlflow:latest \
+                      ghcr.io/${{ github.repository }}/dgmd_mlflow:latest
+
+      - name: Push Container Image
+        run: |
+          set -e
+          docker push ghcr.io/${{ github.repository }}/dgmd_mlflow:latest
