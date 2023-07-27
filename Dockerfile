@@ -1,17 +1,19 @@
-FROM python:3.8.0
+FROM python:3.8-slim-buster
 
-RUN pip install \
-    mlflow \
-    pymysql \
-    boto3 & \
-    mkdir /mlflow/
+# Install python packages
+RUN python -m pip install --upgrade pip
+RUN pip install mlflow boto3
+
+# Create folders
+RUN mkdir /mlflow
+RUN mkdir /db
+RUN mkdir /secrets
 
 EXPOSE 5000
 
-## Environment variables made available through the task.
-## Do not enter values
+# Launch mlflow server
 CMD mlflow server \
     --host 0.0.0.0 \
     --port 5000 \
-    --default-artifact-root ${BUCKET} \
-    --backend-store-uri mysql+pymysql://${USERNAME}:${PASSWORD}@${HOST}:${PORT}/${DATABASE}
+    --default-artifact-root s3://dgmd-mlflow-store \
+    --backend-store-uri sqlite:////db/mlflowdb.sqlite
